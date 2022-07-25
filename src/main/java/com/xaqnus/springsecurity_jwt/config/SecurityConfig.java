@@ -1,5 +1,6 @@
 package com.xaqnus.springsecurity_jwt.config;
 
+import com.xaqnus.springsecurity_jwt.filter.MyFilter3;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
 @Configuration
@@ -20,7 +22,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return
                 http
-                //.addFilterBefore(new MyFilter1(), BasicAuthenticationFilter.class) //Security Config에 Filter거는 방법
+                .addFilterBefore(new MyFilter3(), UsernamePasswordAuthenticationFilter.class) //Security Config에 Filter거는 방법
                 .csrf()
                 .disable()
                 .sessionManagement()
