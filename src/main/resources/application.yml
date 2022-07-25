@@ -1,6 +1,6 @@
 
 server:
-  port: 8087
+  port: 8287
   servlet:
     context-path: /
     encoding:

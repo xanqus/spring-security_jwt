@@ -20,6 +20,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return
                 http
+                //.addFilterBefore(new MyFilter1(), BasicAuthenticationFilter.class) //Security Config에 Filter거는 방법
                 .csrf()
                 .disable()
                 .sessionManagement()
