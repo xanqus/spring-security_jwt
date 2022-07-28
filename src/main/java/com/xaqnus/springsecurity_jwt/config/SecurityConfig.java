@@ -1,7 +1,8 @@
 package com.xaqnus.springsecurity_jwt.config;
 
-import com.xaqnus.springsecurity_jwt.filter.MyFilter3;
-import com.xaqnus.springsecurity_jwt.jwt.JwtAuthenticationFilter;
+import com.xaqnus.springsecurity_jwt.config.jwt.JwtAuthenticationFilter;
+import com.xaqnus.springsecurity_jwt.config.jwt.JwtAuthorizationFilter;
+import com.xaqnus.springsecurity_jwt.dao.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +12,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final CorsConfig corsConfig;
+    private final UserRepository userRepository;
 
 
   @Bean
@@ -27,7 +28,7 @@ public class SecurityConfig {
 
         return
                 http
-                .addFilterBefore(new MyFilter3(), UsernamePasswordAuthenticationFilter.class) //Security Config에 Filter거는 방법
+                //.addFilterBefore(new MyFilter3(), UsernamePasswordAuthenticationFilter.class) //Security Config에 Filter거는 방법
                 .csrf().disable()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -55,7 +56,8 @@ public class SecurityConfig {
             AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);
             http
                     .addFilter(corsConfig.corsFilter())
-                    .addFilter(new JwtAuthenticationFilter(authenticationManager));
+                    .addFilter(new JwtAuthenticationFilter(authenticationManager))
+                    .addFilter(new JwtAuthorizationFilter(authenticationManager, userRepository));
         }
     }
 

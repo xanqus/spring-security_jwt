@@ -1,5 +1,7 @@
-package com.xaqnus.springsecurity_jwt.jwt;
+package com.xaqnus.springsecurity_jwt.config.jwt;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xaqnus.springsecurity_jwt.auth.PrincipalDetails;
 import com.xaqnus.springsecurity_jwt.model.User;
@@ -15,6 +17,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
+
 
 // 스프링 시큐리티에서 UsernamePasswordAuthenticationFilter가 있음
 // /login 요청해서 username, password를 전송하면(post) UsernamePasswordAuthenticationFilter가 동작을함
@@ -57,6 +61,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         System.out.println("successfultAuthentication 실행됨: 인증 완료");
-        super.successfulAuthentication(request, response, chain, authResult);
+
+        PrincipalDetails principalDetails= (PrincipalDetails) authResult.getPrincipal();
+
+        String jwtToken = JWT.create()
+                .withSubject("login token")
+                .withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.EXPIRATION_TIME))
+                .withClaim("id", principalDetails.getUser().getId())
+                .withClaim("username", principalDetails.getUser().getUsername())
+                .sign(Algorithm.HMAC512(JwtProperties.SECRET));
+
+        response.addHeader("Authorization", JwtProperties.TOKEN_PREFIX + jwtToken);
     }
 }
