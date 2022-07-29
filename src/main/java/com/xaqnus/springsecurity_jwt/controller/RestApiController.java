@@ -3,6 +3,7 @@ package com.xaqnus.springsecurity_jwt.controller;
 import com.xaqnus.springsecurity_jwt.dao.UserRepository;
 import com.xaqnus.springsecurity_jwt.model.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,5 +49,13 @@ public class RestApiController {
     @GetMapping("/api/v1/admin")
     public String admin() {
         return "admin";
+    }
+
+    @GetMapping("session")
+    public String getSession() {
+        String contextHolder = SecurityContextHolder.getContext().getAuthentication().toString();
+        System.out.println("contextHolder");
+        System.out.println(contextHolder);
+        return "session";
     }
 }

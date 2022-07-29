@@ -8,7 +8,6 @@ import com.xaqnus.springsecurity_jwt.model.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import javax.servlet.FilterChain;
@@ -32,17 +31,20 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
 
 
-        System.out.println("인증이나 권한이 필요한 주소요청이 됨.");
+        System.out.println("권한 필터");
 
-        String jwtHeader = request.getHeader("Authorization").replace(JwtProperties.TOKEN_PREFIX, "");;
+        String jwtHeader = request.getHeader("Authorization");
         System.out.println("jwtHeader" + jwtHeader);
 
-        if(jwtHeader == null || jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
+        if(jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
+
+            System.out.println("토큰없음");
             chain.doFilter(request, response);
             return;
         }
 
         String jwtToken = request.getHeader("Authorization").replace("Bearer ", "");
+        System.out.println("header가 token으로 변환됨");
 
         String username =
                 JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwtToken).getClaim("username").asString();
@@ -54,13 +56,17 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             User userEntity = userRepository.findByUsername(username);
 
             PrincipalDetails principalDetails = new PrincipalDetails(userEntity);
+            System.out.println("userEntity");
+            System.out.println(userEntity);
+            System.out.println("principalDetails");
+            System.out.println(principalDetails);
 
             // Jwt 토큰 서명을 통해서 서명이 정상이면 Authentication 객체를 만들어준다.
             Authentication authentication =
                     new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
 
             // 강제로 security의 세션에 접근하여 Authentication 객체를 저장.
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            //SecurityContextHolder.getContext().setAuthentication(authentication);
 
             chain.doFilter(request, response);
         }
