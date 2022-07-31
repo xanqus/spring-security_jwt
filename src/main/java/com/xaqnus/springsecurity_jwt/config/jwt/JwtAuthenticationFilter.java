@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         System.out.println("로그인 시도중");
         try {
             ObjectMapper om = new ObjectMapper();
+            System.out.println("입력정보");
             User user = om.readValue(request.getInputStream(), User.class);
             System.out.println(user);
 

@@ -2,12 +2,17 @@ package com.xaqnus.springsecurity_jwt.config.jwt;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xaqnus.springsecurity_jwt.auth.PrincipalDetails;
 import com.xaqnus.springsecurity_jwt.dao.UserRepository;
+import com.xaqnus.springsecurity_jwt.model.ResponseDTO;
 import com.xaqnus.springsecurity_jwt.model.User;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import javax.servlet.FilterChain;
@@ -25,7 +30,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         this.userRepository = userRepository;
     }
 
-    
+
     // 인증이나 권한이 필요한 주소요청시 해당 필터를 타게 됨
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -36,7 +41,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         String jwtHeader = request.getHeader("Authorization");
         System.out.println("jwtHeader" + jwtHeader);
 
-        if(jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
+        if (jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
 
             System.out.println("토큰없음");
             chain.doFilter(request, response);
@@ -46,12 +51,24 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         String jwtToken = request.getHeader("Authorization").replace("Bearer ", "");
         System.out.println("header가 token으로 변환됨");
 
-        String username =
-                JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwtToken).getClaim("username").asString();
+        String username = null;
+        try {
+            username =
+                    JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwtToken).getClaim("username").asString();
+        } catch (TokenExpiredException e) {
+            System.out.println("토큰 만료됨");
+            ResponseDTO responseDTO = new ResponseDTO();
+            responseDTO.setCode("TOKEN-0001");
+            responseDTO.setMessage("token has expired");
+            responseDTO.setStatus(HttpStatus.UNAUTHORIZED);
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.getWriter().write(new ObjectMapper().writeValueAsString(responseDTO));
+
+        }
 
         System.out.println("username");
         System.out.println(username);
-        if(username!=null){
+        if (username != null) {
 
             User userEntity = userRepository.findByUsername(username);
 
@@ -66,9 +83,11 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
                     new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
 
             // 강제로 security의 세션에 접근하여 Authentication 객체를 저장.
-            //SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
             chain.doFilter(request, response);
+
+
         }
         super.doFilterInternal(request, response, chain);
 
